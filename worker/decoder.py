@@ -188,26 +188,33 @@ def token2punct(model, puncts, device, seq, lctx, rctx, dic, space):
     pred = pred[len(lctx):]
     if len(rctx) > 0: pred = pred[:-(len(rctx))]
 
-    hypo, tokens = [], []
-    for j, el in enumerate(seq):
-        token = dic[el-2]
-        if token.startswith(space) and len(tokens) > 0:
-            word, norm = ''.join(tokens), pred[j-1]
+    if space == '':
+        hypo = []
+        for norm, el in zip(pred, seq):
+            hypo.append(dic[el-2])
+            if norm > 1:
+               hypo.append(puncts[norm])
+    else:
+        hypo, tokens = [], []
+        for j, el in enumerate(seq):
+            token = dic[el-2]
+            if token.startswith(space) and len(tokens) > 0:
+                word, norm = ''.join(tokens), pred[j-1]
+                if norm > len(puncts):
+                    word = word.capitalize()
+                    norm -= len(puncts)
+                if norm > 1:
+                    word += puncts[norm]
+                hypo.append(word)
+                tokens = []
+            tokens.append(token[1:] if token.startswith(space) else token)
+
+        if len(tokens) > 0:
+            word, norm = ''.join(tokens), pred[j]
             if norm > len(puncts):
                 word = word.capitalize()
                 norm -= len(puncts)
             if norm > 1:
                 word += puncts[norm]
             hypo.append(word)
-            tokens = []
-        tokens.append(token[1:] if token.startswith(space) else token)
-
-    if len(tokens) > 0:
-        word, norm = ''.join(tokens), pred[j]
-        if norm > len(puncts):
-            word = word.capitalize()
-            norm -= len(puncts)
-        if norm > 1:
-            word += puncts[norm]
-        hypo.append(word)
     return hypo
