@@ -17,6 +17,7 @@ $pythonCMD worker.py \
     --outputType "${outputType:-text}" \
     --dict "/model/bpe4k.dic" \
     --model "/model/s2s-lstm.dic" \
-    --punct "/model/punct.dic" \
+    --punct-dic "/model/punct.dic" \
+    --punct-voc "/model/punct-voc.json" \
     --device "${DEVICE:-cpu}" \
     --beam-size "${BEAMSIZE:-6}" ${INT8:+--int8}

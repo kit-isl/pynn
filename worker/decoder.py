@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from datetime import date
+import json
 import numpy
 import torch
 
@@ -154,7 +155,12 @@ def init_punct_model(args):
             {torch.nn.LSTM, torch.nn.Linear},  # a set of layers to dynamically quantize
             dtype=torch.qint8)  # the target dtype for quantized weights
     #print(model)
-    return model
+
+    with open(args.punct_voc) as f:
+        punct_voc = json.load(f)
+        punct_voc = {int(k): v for k, v in punct_voc.items()}
+
+    return model, punct_voc
 
 def clean_noise(seq, dic, space):
     clean_seq = []
@@ -171,10 +177,9 @@ def clean_noise(seq, dic, space):
     if not has_noise: clean_seq.extend(word)
     return clean_seq
 
-def token2punct(model, device, seq, lctx, rctx, dic, space):
+def token2punct(model, puncts, device, seq, lctx, rctx, dic, space):
     if len(seq) == 0: return []
 
-    puncts = {1:'', 2:'.', 3:',', 4:'?', 5:'!', 6:':', 7:';'}
     src = torch.LongTensor(lctx + seq + rctx)
     src = (src - 2).unsqueeze(0).to(device)
     mask = src.gt(0)
@@ -188,9 +193,9 @@ def token2punct(model, device, seq, lctx, rctx, dic, space):
         token = dic[el-2]
         if token.startswith(space) and len(tokens) > 0:
             word, norm = ''.join(tokens), pred[j-1]
-            if norm > 7:
+            if norm > len(puncts):
                 word = word.capitalize()
-                norm -= 7
+                norm -= len(puncts)
             if norm > 1:
                 word += puncts[norm]
             hypo.append(word)
@@ -199,9 +204,9 @@ def token2punct(model, device, seq, lctx, rctx, dic, space):
 
     if len(tokens) > 0:
         word, norm = ''.join(tokens), pred[j]
-        if norm > 7:
+        if norm > len(puncts):
             word = word.capitalize()
-            norm -= 7
+            norm -= len(puncts)
         if norm > 1:
             word += puncts[norm]
         hypo.append(word)

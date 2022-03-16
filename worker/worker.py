@@ -137,7 +137,7 @@ def seg2text(segs):
     for seg in segs: hypo.append(' '.join(seg.text))
     return '<%d> %s <%d>' % (segs[0].start, ' | '.join(hypo), segs[-1].end)
 
-def punct_segs(punct, device, dic, space, segs):
+def punct_segs(punct, punct_voc, device, dic, space, segs):
     for j, seg in enumerate(segs):
         if seg.fixed: continue
         k, lctx = j, [] 
@@ -148,7 +148,7 @@ def punct_segs(punct, device, dic, space, segs):
         while k < len(segs) and len(rctx) < 6:
             rctx = rctx + segs[k].hypo
             k += 1
-        text = token2punct(punct, device, seg.hypo, lctx, rctx, dic, space)
+        text = token2punct(punct, punct_voc, device, seg.hypo, lctx, rctx, dic, space)
         seg.text = text
         if len(seg.text) > 0:
             if seg.uppercase: seg.text[0] = seg.text[0].capitalize()
@@ -170,7 +170,7 @@ def punct_segs(punct, device, dic, space, segs):
     return segs
 
 
-def update_and_send(punct, device, dic, space, segs, new_seg, wc):
+def update_and_send(punct, punct_voc, device, dic, space, segs, new_seg, wc):
     if len(segs) > 0:
         last_seg = segs[-1]
         if last_seg.start < new_seg.start:
@@ -199,7 +199,7 @@ def update_and_send(punct, device, dic, space, segs, new_seg, wc):
 
     if len(old_segs) > 0:
         if not old_segs[-1].fixed:
-            old_segs = punct_segs(punct, device, dic, space, old_segs)
+            old_segs = punct_segs(punct, punct_voc, device, dic, space, old_segs)
         print('Sending final: ' + seg2text(old_segs))
 
         for seg in old_segs: wc += len(seg.text)
@@ -214,7 +214,7 @@ def update_and_send(punct, device, dic, space, segs, new_seg, wc):
                 if br: break
         send_segs(old_segs, args.outputType)
 
-    segs = punct_segs(punct, device, dic, space, new_segs)
+    segs = punct_segs(punct, punct_voc, device, dic, space, new_segs)
     print('Sending partial: ' + seg2text(segs))
     send_segs(segs, args.outputType)
 
@@ -225,6 +225,7 @@ parser = argparse.ArgumentParser(description='pynn')
 parser.add_argument('--model-dic', help='model dictionary', required=True)
 parser.add_argument('--dict', help='dictionary file', default=None)
 parser.add_argument('--punct-dic', help='dictionary file', default=None)
+parser.add_argument('--punct-voc', help='punctuation vocabulary', default=None)
 parser.add_argument('--device', help='device', type=str, default='cuda')
 parser.add_argument('--beam-size', help='beam size', type=int, default=8)
 parser.add_argument('--attn-head', help='attention head', type=int, default=0)
@@ -281,7 +282,7 @@ mcloud_w.set_callback("break", processing_break_callback)
 fbank_mat = audio.filter_bank(sample_rate, 256, 40)
 print("Initialize the model...")
 model, device, dic = init_asr_model(args)
-punct = init_punct_model(args) if args.outputType=="text" else None
+punct, punct_voc = init_punct_model(args) if args.outputType=="text" else (None, None)
 torch.set_grad_enabled(False)
 print("Done.")
 
@@ -346,7 +347,7 @@ try:
                 if punct is not None:
                     #end = start + frames*10
                     new_seg = Segment(clean_noise(hypo, dic, args.space), start, end)
-                    cur_segs, wc = update_and_send(punct, device, dic, args.space, cur_segs, new_seg, wc)
+                    cur_segs, wc = update_and_send(punct, punct_voc, device, dic, args.space, cur_segs, new_seg, wc)
                 else:
                     hypo = token2word(hypo, dic, args.space)
                     print('Sending partial: ' + ' '.join(hypo))
@@ -361,7 +362,7 @@ try:
             hypo = hypo[1:-1]
             if punct is not None:
                 new_seg = Segment(clean_noise(hypo, dic, args.space), start, end)
-                cur_segs, wc = update_and_send(punct, device, dic, args.space, cur_segs, new_seg, wc)
+                cur_segs, wc = update_and_send(punct, punct_voc, device, dic, args.space, cur_segs, new_seg, wc)
             else:
                 hypo = token2word(hypo, dic, args.space)
                 print('Sending final: ' + ' '.join(hypo))

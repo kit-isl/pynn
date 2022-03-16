@@ -18,6 +18,7 @@ OMP_NUM_THREADS=8 $pythonCMD worker.py \
 	--outputType "text" \
 	--dict "model/bpe4k.dic" \
 	--model "model/s2s-lstm.dic" \
-        --punct "model/punct.dic" \
+	--punct-dic "model/punct.dic" \
+	--punct-voc "model/punct-voc.json" \
 	--device 'cpu' --beam-size 6 
 
