@@ -237,6 +237,7 @@ parser.add_argument('--incl-block', help='incremental block size', type=int, def
 parser.add_argument('--max-len', help='max length', type=int, default=100)
 parser.add_argument('--space', help='space token', type=str, default='▁')
 parser.add_argument('--seg-based', help='output when audio segment is complete', action='store_true')
+parser.add_argument('--no-mean-norm', help='no mean substraction', action='store_true')
 
 #worker argument
 parser.add_argument('-s','--server', type=str, default="i13srv53.ira.uka.de")

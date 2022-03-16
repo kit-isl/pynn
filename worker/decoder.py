@@ -111,7 +111,8 @@ def init_asr_model(args):
 def decode(model, device, args, adc, fbank_mat, start=0, prefix=[1]):
     signal = numpy.frombuffer(adc[start*16*10*2:], numpy.int16)
     feats = audio.extract_fbank(signal, fbank_mat, sample_rate=16000)
-    feats = feats - feats.mean(axis=0, keepdims=True)
+    if args.no_mean_norm:
+        feats = feats - feats.mean(axis=0, keepdims=True)
      
     frames = (feats.shape[0])
     print("Decoding for audio segment of %d frames" % frames)
