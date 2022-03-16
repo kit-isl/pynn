@@ -3,7 +3,13 @@
 export OMP_NUM_THREADS=8
 
 if lscpu | grep -q avx2; then
-    INT8=y
+    extra_args+=(--int8)
+fi
+if [[ ${SPACE+y} ]]; then
+    extra_args+=(--space "$SPACE")
+fi
+if [[ ${EXTRA_ARGS+y} ]]; then
+    extra_args+=($EXTRA_ARGS)
 fi
 
 pythonCMD="python -u -W ignore"
@@ -20,4 +26,4 @@ $pythonCMD worker.py \
     --punct-dic "/model/punct.dic" \
     --punct-voc "/model/punct-voc.json" \
     --device "${DEVICE:-cpu}" \
-    --beam-size "${BEAMSIZE:-6}" ${INT8:+--int8}
+    --beam-size "${BEAMSIZE:-6}" "${extra_args[@]}"
