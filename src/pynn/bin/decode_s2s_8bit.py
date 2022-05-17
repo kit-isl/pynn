@@ -63,16 +63,12 @@ if __name__ == '__main__':
     print(module)
     model.load_state_dict(state, strict=False)
     mdic = {'params': mdic['params'], 'class': mdic['class'], 'module': module, 'state': model.state_dict()}
-    torch.save(mdic, 'epoch-avg.dic')
     model.eval()
 
-    print_size_of_model(model)
     model = torch.quantization.quantize_dynamic(
         model,  # the original model
         {torch.nn.LSTM, torch.nn.Linear},  # a set of layers to dynamically quantize
         dtype=torch.qint8)  # the target dtype for quantized weights
-    print_size_of_model(model)
-    print(model)
 
     model = model.to(device)
     
