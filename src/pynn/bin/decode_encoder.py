@@ -43,7 +43,7 @@ if __name__ == '__main__':
     for line in open(args.data_path, 'r'):
         tokens = line.split()
         seq = [int(token) for token in tokens]
-        seq = [el+2 for el in seq] + [2]
+        seq = [el for el in seq] + [2]
         data.append(seq)
 
     puncts = {1:'', 2:'.', 3:',', 4:'?', 5:'!', 6:':', 7:';'}
@@ -66,9 +66,9 @@ if __name__ == '__main__':
             for seq, pred in zip(seqs, preds):
                 hypo, tokens = [], []
                 for j, el in enumerate(seq[:-1]):
-                    token = dic[el-2]
+                    token = dic[el]
                     if token.startswith(args.space) and len(tokens) > 0:
-                        word, norm = ''.join(tokens), pred[j-1]-2
+                        word, norm = ''.join(tokens), pred[j-1]
                         if norm > 7:
                             word = word.capitalize()
                             norm -= 7
@@ -79,7 +79,7 @@ if __name__ == '__main__':
                     tokens.append(token[1:] if token.startswith(args.space) else token)
 
                 if len(tokens) > 0:
-                    word, norm = ''.join(tokens), pred[j]-2
+                    word, norm = ''.join(tokens), pred[j]
                     if norm > 7:
                         word = word.capitalize()
                         norm -= 7

@@ -95,6 +95,11 @@ def token2word(tokens, scores, dic, word_dic=None, space=''):
 def write_hypo(hypos, scores, fout, utts, dic, word_dic=None, space='', output='ctm'):
     if scores is None:
         scores = [[0.] * len(hypo) for hypo in hypos]
+
+    if output == 'ids':
+        write_ids(hypos, utts, fout)
+        return
+
     hypos = [token2word(hypo, score, dic, word_dic, space)
              for hypo, score in zip(hypos, scores)]
 
@@ -130,4 +135,9 @@ def write_stm(hypos, utts, fout):
 def write_text(hypos, utts, fout):
     for hypo, utt in zip(hypos, utts):
         hypo = [w for w,s in hypo]
+        fout.write('%s %s\n' % (utt, ' '.join(hypo)))
+
+def write_ids(hypos, utts, fout):
+    for hypo, utt in zip(hypos, utts):
+        hypo = [str(wid-2) for wid in hypo if wid-2 > 1]
         fout.write('%s %s\n' % (utt, ' '.join(hypo)))
