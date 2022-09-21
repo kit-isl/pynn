@@ -80,7 +80,7 @@ def incl_search(model, src, max_node=8, max_len=10, states=[1], len_norm=False, 
     hypo, prob = beam.best_hypo()
     sth = beam.stable_hypo(prune)
 
-    return enc_out, attn, enc_mask, hypo, prob, sth
+    return attn, hypo, prob, sth
 
 def init_asr_model(args):
     dic = None
@@ -125,10 +125,9 @@ def decode(model, device, args, adc, fbank_mat, start=0, prefix=[1]):
     with torch.no_grad():
         src = torch.HalfTensor(feats) if args.fp16 else torch.FloatTensor(feats)
         src = src.to(device)
-        enc_out, attn, mask, hypo, score, sth = incl_search(model, src, beam_size, max_len, prefix)
+        attn, hypo, score, sth = incl_search(model, src, beam_size, max_len, prefix)
 
         tgt = torch.LongTensor(hypo).to(device).view(1, -1)
-        attn = model.get_attn(enc_out, mask, tgt)
         attn = attn[0]
         cs = torch.cumsum(attn[head], dim=1)
         ep = cs.le(1.-padding).sum(dim=1)
